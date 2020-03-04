@@ -66,7 +66,7 @@ class MetaLSTMCell(nn.Module):
         # next cell/params
         c_next = torch.sigmoid(f_next).mul(c_prev) - torch.sigmoid(i_next).mul(grad) # note, - sign is important cuz i_next is positive due to sigmoid activation
 
-        return c_next, [f_next, i_next, c_next]
+        return c_next.squeeze(), [f_next, i_next, c_next]
 
     def extra_repr(self):
         s = '{input_size}, {hidden_size}, {n_learner_params}'
@@ -107,7 +107,7 @@ class MetaLearner(nn.Module):
         # optimizer lstm i.e. theta^<t> = f^<t>*theta^<t-1> + i^<t>*grad^<t>
         metalstm_hxn = hs[1] # previous hx from optimizer lstm = [metalstm_fn, metalstm_in, metalstm_cn]
         xn_metalstm = [lstmhx, grad] # note, the losses,grads are preprocessed by the lstm first before passing to metalstm [outputs_of_lstm, grad] = [ lstm(losses, grad_preps), grad]
-        flat_learner_unsqzd, metalstm_hs = self.metalstm(inputs=xn_metalstm, hx=metalstm_hxn)
+        theta_next, metalstm_hs = self.metalstm(inputs=xn_metalstm, hx=metalstm_hxn)
 
-        return flat_learner_unsqzd.squeeze(), [(lstmhx, lstmcx), metalstm_hs]
+        return theta_next, [(lstmhx, lstmcx), metalstm_hs]
 
