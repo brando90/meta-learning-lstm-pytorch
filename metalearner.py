@@ -94,17 +94,19 @@ class MetaLearner(nn.Module):
 
             hs = [(lstm_hn, lstm_cn), [metalstm_fn, metalstm_in, metalstm_cn]]
         """
-        loss, grad_prep, grad = inputs
-        loss = loss.expand_as(grad_prep)
-        inputs = torch.cat((loss, grad_prep), 1)   # [n_learner_params, 4]
-
+        # sort out hidden states for lstm and meta-lstm
         if hs is None:
             hs = [None, None]
-
-        # 
-        lstm_hnx = hs[0] # previous hx from normal lstm = (lstm_hn, lstm_cn)
-        lstmhx, lstmcx = self.lstm(inputs, lstm_hnx)
-        flat_learner_unsqzd, metalstm_hs = self.metalstm([lstmhx, grad], hs[1])
+        # sort out input x^<t> to normal lstm
+        loss, grad_prep, grad = inputs
+        loss = loss.expand_as(grad_prep) # [1, 2] -> [n_learner_params, 2]
+        xn = torch.cat((loss, grad_prep), 1) # [n_learner_params, 4]
+        # normal lstm
+        lstm_hxn = hs[0] # previous hx from normal lstm = (lstm_hn, lstm_cn)
+        lstmhx, lstmcx = self.lstm(inputs=xn, hx=lstm_hnx)
+        # optimizer lstm i.e. theta^<t> = f^<t>*theta^<t-1> + i^<t>*grad^<t>
+        metalstm_hxn = hs[1] # previous hx from optimizer lstm = [metalstm_fn, metalstm_in, metalstm_cn]
+        flat_learner_unsqzd, metalstm_hs = self.metalstm(inputs=[lstmhx, grad], hx=metalstm_hxn)
 
         return flat_learner_unsqzd.squeeze(), [(lstmhx, lstmcx), metalstm_hs]
 
