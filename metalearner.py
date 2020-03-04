@@ -63,7 +63,7 @@ class MetaLSTMCell(nn.Module):
         f_next = torch.mm(torch.cat((x_all, c_prev, f_prev), 1), self.WF) + self.bF.expand_as(f_prev)
         # i_t = sigmoid(W_i * [ lstm(grad_t, loss_t), theta_{t-1}, i_{t-1}] + b_i)
         i_next = torch.mm(torch.cat((x_all, c_prev, i_prev), 1), self.WI) + self.bI.expand_as(i_prev)
-        # next cell/params
+        # next cell/params: theta^<t> = f^<t>*theta^<t-1> - i^<t>*grad^<t>
         c_next = torch.sigmoid(f_next).mul(c_prev) - torch.sigmoid(i_next).mul(grad) # note, - sign is important cuz i_next is positive due to sigmoid activation
 
         return c_next.squeeze(), [f_next, i_next, c_next]
@@ -101,9 +101,11 @@ class MetaLearner(nn.Module):
         loss, grad_prep, grad = inputs
         loss = loss.expand_as(grad_prep) # [1, 2] -> [n_learner_params, 2]
         xn_lstm = torch.cat((loss, grad_prep), 1) # [n_learner_params, 4]
+        
         # normal lstm
         lstm_hxn = hs[0] # previous hx from normal lstm = (lstm_hn, lstm_cn)
         lstmhx, lstmcx = self.lstm(inputs=xn_lstm, hx=lstm_hnx)
+        
         # optimizer lstm i.e. theta^<t> = f^<t>*theta^<t-1> + i^<t>*grad^<t>
         metalstm_hxn = hs[1] # previous hx from optimizer lstm = [metalstm_fn, metalstm_in, metalstm_cn]
         xn_metalstm = [lstmhx, grad] # note, the losses,grads are preprocessed by the lstm first before passing to metalstm [outputs_of_lstm, grad] = [ lstm(losses, grad_preps), grad]
