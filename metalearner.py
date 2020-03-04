@@ -48,23 +48,23 @@ class MetaLSTMCell(nn.Module):
                 i (torch.Tensor of size [n_learner_params, 1]): input gate
                 c (torch.Tensor of size [n_learner_params, 1]): flattened learner parameters
         """
-        x_all, grad = inputs
         batch, _ = x_all.size()
-
+        # hx i.e. previous forget, update & cell state from metalstm
         if hx is None:
             f_prev = torch.zeros((batch, self.hidden_size)).to(self.WF.device)
             i_prev = torch.zeros((batch, self.hidden_size)).to(self.WI.device)
             c_prev = self.cI
             hx = [f_prev, i_prev, c_prev]
-
+        # sort out inputs to gates and sort hidden state/memory from last metalstm
+        x_all, grad = inputs # x_all = lstm(grad_t, loss_t), grad i.e. x_all is the preprocessed 
         f_prev, i_prev, c_prev = hx
         
-        # f_t = sigmoid(W_f * [grad_t, loss_t, theta_{t-1}, f_{t-1}] + b_f)
+        # f_t = sigmoid(W_f * [ lstm(grad_t, loss_t), theta_{t-1}, f_{t-1}] + b_f)
         f_next = torch.mm(torch.cat((x_all, c_prev, f_prev), 1), self.WF) + self.bF.expand_as(f_prev)
-        # i_t = sigmoid(W_i * [grad_t, loss_t, theta_{t-1}, i_{t-1}] + b_i)
+        # i_t = sigmoid(W_i * [ lstm(grad_t, loss_t), theta_{t-1}, i_{t-1}] + b_i)
         i_next = torch.mm(torch.cat((x_all, c_prev, i_prev), 1), self.WI) + self.bI.expand_as(i_prev)
         # next cell/params
-        c_next = torch.sigmoid(f_next).mul(c_prev) - torch.sigmoid(i_next).mul(grad)
+        c_next = torch.sigmoid(f_next).mul(c_prev) - torch.sigmoid(i_next).mul(grad) # note, - sign is important cuz i_next is positive due to sigmoid activation
 
         return c_next, [f_next, i_next, c_next]
 
