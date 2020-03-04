@@ -101,7 +101,9 @@ class MetaLearner(nn.Module):
         if hs is None:
             hs = [None, None]
 
-        lstmhx, lstmcx = self.lstm(inputs, hs[0])
+        # 
+        lstm_hnx = hs[0] # previous hx from normal lstm = (lstm_hn, lstm_cn)
+        lstmhx, lstmcx = self.lstm(inputs, lstm_hnx)
         flat_learner_unsqzd, metalstm_hs = self.metalstm([lstmhx, grad], hs[1])
 
         return flat_learner_unsqzd.squeeze(), [(lstmhx, lstmcx), metalstm_hs]
