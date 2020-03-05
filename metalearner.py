@@ -48,6 +48,7 @@ class MetaLSTMCell(nn.Module):
                 i (torch.Tensor of size [n_learner_params, 1]): input gate
                 c (torch.Tensor of size [n_learner_params, 1]): flattened learner parameters
         """
+        x_all, grad = inputs # x_all = lstm(grad_t, loss_t), grad i.e. x_all is the preprocessed 
         batch, _ = x_all.size()
         # hx i.e. previous forget, update & cell state from metalstm
         if hx is None:
@@ -56,7 +57,6 @@ class MetaLSTMCell(nn.Module):
             c_prev = self.cI
             hx = [f_prev, i_prev, c_prev]
         # sort out inputs to gates and sort hidden state/memory from last metalstm
-        x_all, grad = inputs # x_all = lstm(grad_t, loss_t), grad i.e. x_all is the preprocessed 
         f_prev, i_prev, c_prev = hx
         
         # f_t = sigmoid(W_f * [ lstm(grad_t, loss_t), theta_{t-1}, f_{t-1}] + b_f)
@@ -104,7 +104,7 @@ class MetaLearner(nn.Module):
         
         # normal lstm
         lstm_hxn = hs[0] # previous hx from normal lstm = (lstm_hn, lstm_cn)
-        lstmhx, lstmcx = self.lstm(inputs=xn_lstm, hx=lstm_hnx)
+        lstmhx, lstmcx = self.lstm(input=xn_lstm, hx=lstm_hxn)
         
         # optimizer lstm i.e. theta^<t> = f^<t>*theta^<t-1> + i^<t>*grad^<t>
         metalstm_hxn = hs[1] # previous hx from optimizer lstm = [metalstm_fn, metalstm_in, metalstm_cn]

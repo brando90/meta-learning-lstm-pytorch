@@ -31,18 +31,44 @@ class EpisodeDataset(data.Dataset):
         self.labels = sorted(os.listdir(root))
         images = [glob.glob(os.path.join(root, label, '*')) for label in self.labels]
 
-        self.episode_loader = [data.DataLoader(
-            ClassDataset(images=images[idx], label=idx, transform=transform),
-            batch_size=n_shot+n_eval, shuffle=True, num_workers=0) for idx, _ in enumerate(self.labels)]
+        # self.episode_loader = [data.DataLoader(
+        #     ClassDataset(images=images[idx], label=idx, transform=transform),
+        #     batch_size=n_shot+n_eval, shuffle=True, num_workers=0) for idx, _ in enumerate(self.labels)]
+
+        self.episode_loader = []
+        # loops through each labels for the meta set split e.g. 64, 16, 20
+        for idx, _ in enumerate(self.labels):
+            #print(f'idx = {idx}')
+            label = idx
+            imgs = images[idx] # 600 images
+            #print(f'# of images in Class Dataset = {len(imgs)}')
+            classdataset = ClassDataset(images=imgs, label=label, transform=transform) # all 600 images for a specific class=label
+            taskloader = data.DataLoader(classdataset, batch_size=n_shot+n_eval, shuffle=True, num_workers=0) # by sampling from 600 images we sample a data set split for the meta-learner to train
+            self.episode_loader.append(taskloader)
+        print(f'len(self.episode_loader) = {len(self.episode_loader)}')
 
     def __getitem__(self, idx):
-        return next(iter(self.episode_loader[idx]))
+        '''
+        Getiitem for EpisodeDataset
+
+        Episode = term used to describe each data set consisting of training and test set i.e. D = (D^train,D^test)
+        '''
+        # sample task
+        taskloader = self.episode_loader[idx] # dataloader class that samples examples form task, mimics x,y ~ P(x,y|task=idx), tasks are modeled by index/label in this problem
+        episode_loader = iter(taskloader)
+        # get current data set D = (D^{train},D^{test}) as a [n_shot, c, h, w] tensor
+        current_dataset_episode = next(episode_loader) # sample batch of size 20 from 600 available in the current task to for a D = (D^{train},D^{test}) split
+        return current_dataset_episode # 5,15 data set split D = (D^{train},D^{test})
+        #return next(iter(self.episode_loader[idx]))
 
     def __len__(self):
         return len(self.labels)
 
 
 class ClassDataset(data.Dataset):
+    '''
+    Class that holds all the images for a specific class. So it has the 600 images from class=label.
+    '''
 
     def __init__(self, images, label, transform=None):
         """Args:
@@ -94,6 +120,7 @@ def prepare_data(args):
                 hue=0.2),
             transforms.ToTensor(),
             normalize]))
+    print(f'size of train_set (meta) = {len(train_set)}')
 
     val_set = EpisodeDataset(args.data_root, 'val', args.n_shot, args.n_eval,
         transform=transforms.Compose([

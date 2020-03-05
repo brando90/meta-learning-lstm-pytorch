@@ -17,6 +17,9 @@ from dataloader import prepare_data
 from utils import *
 
 
+from pdb import set_trace as st
+
+
 FLAGS = argparse.ArgumentParser()
 FLAGS.add_argument('--mode', choices=['train', 'test'])
 # Hyper-parameters
@@ -126,9 +129,36 @@ def train_learner(learner_w_grad, metalearner, train_input, train_target, args):
     return cI
 
 
+def brandos_load(args):
+    args.mode = "train"
+    args.n_shot = 5
+    args.n_eval = 15
+    args.n_class = 5
+    args.input_size = 4
+    args.hidden_size = 20
+    args.lr = 1e-3
+    #args.episode = 50000
+    args.episode = 7
+    args.episode_val = 100
+    args.epoch = 8
+    args.batch_size = 25
+    args.image_size = 84
+    args.grad_clip = 0.25
+    args.bn_momentum = 0.95
+    args.bn_eps = 1e-3
+    args.data = "miniimagenet"
+    #args.data-root = "data/miniImagenet/"
+    args.data_root = "/Users/brandomiranda/automl-meta-learning/data/miniImagenet"
+    args.pin_mem = True
+    args.log_freq = 50
+    args.val_freq = 10
+    args.cpu = True
+    return args
+
 def main():
 
     args, unparsed = FLAGS.parse_known_args()
+    args = brandos_load(args)
     if len(unparsed) != 0:
         raise NameError("Argument {} not recognized".format(unparsed))
 
@@ -138,6 +168,7 @@ def main():
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
 
+    #args.dev = torch.device('cpu')
     if args.cpu:
         args.dev = torch.device('cpu')
     else:
@@ -171,9 +202,13 @@ def main():
         return
 
     best_acc = 0.0
-    logger.loginfo("Start training")
+    logger.loginfo("---> Start training")
     # Meta-training
-    for eps, (episode_x, episode_y) in enumerate(train_loader):
+    #x = list(train_loader)
+    for eps, (episode_x, episode_y) in enumerate(train_loader): # sample data set split episode_x = D = (D^{train},D^{test})
+        print(f'episode = {eps}')
+        #print(f'episode_y = {episode_y}')
+        print(f'episode_x.mean() = {episode_x.mean()}')
         # episode_x.shape = [n_class, n_shot + n_eval, c, h, w]
         # episode_y.shape = [n_class, n_shot + n_eval] --> NEVER USED
         train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
