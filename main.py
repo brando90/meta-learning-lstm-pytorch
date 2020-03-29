@@ -16,6 +16,7 @@ from metalearner import MetaLearner
 from dataloader import prepare_data
 from utils import *
 
+from pathlib import Path
 
 from pdb import set_trace as st
 
@@ -115,7 +116,12 @@ def train_learner(learner_w_grad, metalearner, train_input, train_target, args):
             acc = accuracy(output, y)
             learner_w_grad.zero_grad()
             loss.backward()
-            grad = torch.cat([p.grad.data.view(-1) / args.batch_size for p in learner_w_grad.parameters()], 0)
+            # grad = torch.cat([w.grad.data.view(-1) / args.batch_size for w in learner_w_grad.parameters()], 0)
+            grad = []
+            for w in learner_w_grad.parameters():
+                g = w.grad.data.view(-1) / args.batch_size
+                grad.append(g)
+            grad = torch.cat(grad,0)
 
             # preprocess grad & loss and metalearner forward
             grad_prep = preprocess_grad_loss(grad)  # [n_learner_params, 2]
@@ -148,7 +154,7 @@ def brandos_load(args):
     args.bn_eps = 1e-3
     args.data = "miniimagenet"
     #args.data-root = "data/miniImagenet/"
-    args.data_root = "/Users/brandomiranda/automl-meta-learning/data/miniImagenet"
+    args.data_root = Path("~/automl-meta-learning/data/miniImagenet").expanduser()
     args.pin_mem = True
     args.log_freq = 50
     args.val_freq = 10

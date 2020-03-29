@@ -1,1 +1,7 @@
 /log*
+
+data/
+
+.vscode
+
+__pycache__/
