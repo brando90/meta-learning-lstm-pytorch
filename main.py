@@ -143,18 +143,16 @@ def brandos_load(args):
     args.input_size = 4
     args.hidden_size = 20
     args.lr = 1e-3
-    #args.episode = 50000
-    args.episode = 7
+    args.episode = 50000
     args.episode_val = 100
     args.epoch = 8
-    args.batch_size = 25
+    args.batch_size = 25  # N*K = 5*5
     args.image_size = 84
     args.grad_clip = 0.25
     args.bn_momentum = 0.95
     args.bn_eps = 1e-3
     args.data = "miniimagenet"
-    #args.data-root = "data/miniImagenet/"
-    args.data_root = Path("~/automl-meta-learning/data/miniImagenet").expanduser()
+    args.data_root = Path('~/data/miniimagenet_meta_lstm/miniImagenet/').expanduser()
     args.pin_mem = True
     args.log_freq = 50
     args.val_freq = 10
@@ -210,10 +208,10 @@ def main():
     best_acc = 0.0
     logger.loginfo("---> Start training")
     # Meta-training
-    #x = list(train_loader)
     for eps, (episode_x, episode_y) in enumerate(train_loader): # sample data set split episode_x = D = (D^{train},D^{test})
         print(f'episode = {eps}')
         #print(f'episode_y = {episode_y}')
+        print(f'episide_x.size() = {episode_x.size()}')  # episide_x.size() = torch.Size([5, 20, 3, 84, 84]) i.e. N classes for K shot task with K_eval query examples
         print(f'episode_x.mean() = {episode_x.mean()}')
         # episode_x.shape = [n_class, n_shot + n_eval, c, h, w]
         # episode_y.shape = [n_class, n_shot + n_eval] --> NEVER USED
