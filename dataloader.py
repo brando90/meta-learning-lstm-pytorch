@@ -10,10 +10,14 @@ import torch
 import torch.utils.data as data
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
-import PIL.Image as PILI
+import PIL.Image as Image
 import numpy as np
 
 from tqdm import tqdm
+
+from pathlib import Path
+
+from types import SimpleNamespace
 
 """
 The task sampling process here works like this.
@@ -32,7 +36,7 @@ class AllMiniImagenetDataset(data.Dataset):
         root = os.path.join(root, phase)
         # list of strings with the label name
         self.labels = sorted(os.listdir(root))
-        # list of strings to images
+        # list of path to images (str) per class
         images = [glob.glob(os.path.join(root, label, '*')) for label in self.labels]
 
         self.class_loaders = []
@@ -69,7 +73,7 @@ class LabelDataset(data.Dataset):
 
     def __getitem__(self, idx):
         """gets an image and it's label"""
-        image = PILI.open(self.images[idx]).convert('RGB')
+        image = Image.open(self.images[idx]).convert('RGB')
         if self.transform is not None:
             image = self.transform(image)
 
@@ -144,3 +148,38 @@ def prepare_data(args):
         batch_sampler=TaskSampler(len(test_set), args.n_class, args.episode_val))
 
     return train_loader, val_loader, test_loader
+
+def brandos_load(args):
+    args.mode = "train"
+    args.n_shot = 5
+    args.n_eval = 15
+    args.n_class = 5
+    args.input_size = 4
+    args.hidden_size = 20
+    args.lr = 1e-3
+    args.episode = 50000
+    args.episode_val = 100
+    args.epoch = 8
+    args.batch_size = 25  # N*K = 5*5
+    args.image_size = 84
+    args.grad_clip = 0.25
+    args.bn_momentum = 0.95
+    args.bn_eps = 1e-3
+    args.data = "miniimagenet"
+    args.data_root = Path('~/data/miniimagenet_meta_lstm/miniImagenet/').expanduser()
+    args.pin_mem = True
+    args.log_freq = 50
+    args.val_freq = 10
+    args.cpu = True
+    args.n_workers = 4
+    return args
+
+def main():
+    args = SimpleNamespace()
+    args = brandos_load(args)
+    train_loader, val_loader, test_loader = prepare_data(args)
+
+
+if __name__ == '__main__':
+    main()
+    print('DONE')
