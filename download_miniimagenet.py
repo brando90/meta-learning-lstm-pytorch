@@ -1,3 +1,19 @@
+#!/home/miranda9/.conda/envs/automl-meta-learning_wmlce-v1.7.0-py3.7/bin/python3.7
+#SBATCH --job-name="miranda9job"
+#SBATCH --output="demo.%j.%N.out"
+#SBATCH --error="demo.%j.%N.err"
+#SBATCH --partition=gpu
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --sockets-per-node=1
+#SBATCH --cores-per-socket=8
+#SBATCH --threads-per-core=4
+#SBATCH --mem-per-cpu=1200
+#SBATCH --export=ALL
+#SBATCH --gres=gpu:1
+#SBATCH --mail-user=brando.science@gmail.com
+#SBATCH --mail-type=ALL
+
 import time
 import os
 
@@ -52,7 +68,7 @@ if __name__ == "__main__":
     print('-> starting Downlooad')
 
     # dir to place mini-imagenet
-    path = Path('/miniimagenet_meta_lstm/').expanduser()
+    path = Path('~/data/miniimagenet_meta_lstm/').expanduser()
     download_and_extract_miniimagenet(path)
 
     print('--> DONE')

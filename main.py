@@ -1,3 +1,19 @@
+#!/home/miranda9/.conda/envs/automl-meta-learning_wmlce-v1.7.0-py3.7/bin/python3.7
+#SBATCH --job-name="miranda9job"
+#SBATCH --output="demo.%j.%N.out"
+#SBATCH --error="demo.%j.%N.err"
+#SBATCH --partition=gpu
+#SBATCH --time=24:00:00
+#SBATCH --nodes=1
+#SBATCH --sockets-per-node=1
+#SBATCH --cores-per-socket=8
+#SBATCH --threads-per-core=4
+#SBATCH --mem-per-cpu=1200
+#SBATCH --export=ALL
+#SBATCH --gres=gpu:1
+#SBATCH --mail-user=brando.science@gmail.com
+#SBATCH --mail-type=ALL
+
 from __future__ import division, print_function, absolute_import
 
 import os
@@ -152,6 +168,7 @@ def brandos_load(args):
     args.bn_momentum = 0.95
     args.bn_eps = 1e-3
     args.data = "miniimagenet"
+    # args.data_root = Path('~/data/miniimagenet_meta_lstm/miniImagenet/').expanduser()
     args.data_root = Path('~/data/miniimagenet_meta_lstm/miniImagenet/').expanduser()
     args.pin_mem = True
     args.log_freq = 50
@@ -209,10 +226,10 @@ def main():
     logger.loginfo("---> Start training")
     # Meta-training
     for eps, (episode_x, episode_y) in enumerate(train_loader): # sample data set split episode_x = D = (D^{train},D^{test})
-        print(f'episode = {eps}')
+        # print(f'episode = {eps}')
         #print(f'episode_y = {episode_y}')
-        print(f'episide_x.size() = {episode_x.size()}')  # episide_x.size() = torch.Size([5, 20, 3, 84, 84]) i.e. N classes for K shot task with K_eval query examples
-        print(f'episode_x.mean() = {episode_x.mean()}')
+        # print(f'episide_x.size() = {episode_x.size()}')  # episide_x.size() = torch.Size([5, 20, 3, 84, 84]) i.e. N classes for K shot task with K_eval query examples
+        # print(f'episode_x.mean() = {episode_x.mean()}')
         # episode_x.shape = [n_class, n_shot + n_eval, c, h, w]
         # episode_y.shape = [n_class, n_shot + n_eval] --> NEVER USED
         train_input = episode_x[:, :args.n_shot].reshape(-1, *episode_x.shape[-3:]).to(args.dev) # [n_class * n_shot, :]
@@ -246,8 +263,10 @@ def main():
             acc = meta_test(eps, val_loader, learner_w_grad, learner_wo_grad, metalearner, args, logger)
             if acc > best_acc:
                 best_acc = acc
-                logger.loginfo("* Best accuracy so far *\n")
+                logger.loginfo(f"* Best accuracy so far {acc}*\n")
 
+    logger.loginfo(f'acc: {acc}')
+    logger.loginfo(f"* Best accuracy so far {acc}*\n")
     logger.loginfo("Done")
 
 
