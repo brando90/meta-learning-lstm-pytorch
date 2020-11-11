@@ -174,6 +174,10 @@ def brandos_load(args):
     args.log_freq = 50
     args.val_freq = 10
     args.cpu = True
+    args.seed = None
+    args.save = Path('~/data/meta_lstm_logs/').expanduser()
+    args.save.mkdir(parents=True, exist_ok=True)
+    args.save = str(args.save)
     return args
 
 def main():
@@ -192,6 +196,7 @@ def main():
     #args.dev = torch.device('cpu')
     if args.cpu:
         args.dev = torch.device('cpu')
+        args.gpu_name = args.dev
     else:
         if not torch.cuda.is_available():
             raise RuntimeError("GPU unavailable.")
@@ -199,6 +204,10 @@ def main():
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
         args.dev = torch.device('cuda')
+        try:
+            args.gpu_name = torch.cuda.get_device_name(0)
+        except:
+            args.gpu_name = args.dev
 
     logger = GOATLogger(args)
 
@@ -226,7 +235,7 @@ def main():
     logger.loginfo("---> Start training")
     # Meta-training
     for eps, (episode_x, episode_y) in enumerate(train_loader): # sample data set split episode_x = D = (D^{train},D^{test})
-        # print(f'episode = {eps}')
+        print(f'episode = {eps}')
         #print(f'episode_y = {episode_y}')
         # print(f'episide_x.size() = {episode_x.size()}')  # episide_x.size() = torch.Size([5, 20, 3, 84, 84]) i.e. N classes for K shot task with K_eval query examples
         # print(f'episode_x.mean() = {episode_x.mean()}')
