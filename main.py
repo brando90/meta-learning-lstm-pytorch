@@ -209,6 +209,7 @@ def main():
         except:
             args.gpu_name = args.dev
 
+    print(f'device {args.dev}')
     logger = GOATLogger(args)
 
     # Get data

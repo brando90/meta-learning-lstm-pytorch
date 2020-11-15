@@ -11,10 +11,10 @@ import numpy as np
 class GOATLogger:
 
     def __init__(self, args):
-        args.save = args.save + '-{}'.format(args.seed)
+        args.save = f'{args.save}/log-{args.seed}'.format(args.seed)
 
         self.mode = args.mode
-        self.save_root = args.save
+        self.save_root = args.save  # path to this specific log for this expt
         self.log_freq = args.log_freq
 
         if self.mode == 'train':
