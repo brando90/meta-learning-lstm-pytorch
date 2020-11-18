@@ -3,7 +3,7 @@
 #SBATCH --output="experiment_output_job.%j.%N.out"
 #SBATCH --error="experiment_output_job.%j.%N.err"
 #SBATCH --export=ALL
-#SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:V100:1
 #SBATCH --mail-user=brando.science@gmail.com
 #SBATCH --mail-type=ALL
 #SBATCH --time=04:00:00
